@@ -1,0 +1,18 @@
+How to download ERA5 data: https://forum.ecmwf.int/t/step-by-step-instructions-on-how-to-download-data-using-new-climate-data-store-beta-cds-beta/3743
+Use your API with CDSAPI: https://cds.climate.copernicus.eu/how-to-api
+Data selection: https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=download
+
+Retrieve data with Python:
+
+import cdsapi
+import xarray as xr
+
+dataset = "reanalysis-era5-single-levels-monthly-means"
+request = {
+}
+
+client = cdsapi.Client()
+client.retrieve(dataset, request).download()
+
+data = 'PATH/FILENAME.nc'
+ds = xr.open_dataset(data)
