@@ -1,1 +1,15 @@
+# download data as ZIP file and extract to two files with custom filename
+
+data1 = 'C:/Users/ikeva/DM_ERA5_project3_ds1.nc'
+ds1 = xr.open_dataset(data1)
+data2 = 'C:/Users/ikeva/DM_ERA5_project3_ds2.nc'
+ds2 = xr.open_dataset(data2)
+
+ds = xr.concat([ds1, ds2], dim = "time")
+ds.to_netcdf('C:/Users/ikeva/DM_ERA5_project3_ds.nc')
+
+#%%
+data = 'C:/Users/ikeva/DM_ERA5_project3_ds.nc'
+ds = xr.open_dataset(data)
+print(ds)
 
