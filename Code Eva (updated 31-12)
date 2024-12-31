@@ -1,0 +1,78 @@
+import cdsapi
+import xarray as xr
+import numpy as np
+import matplotlib.pyplot as plt
+
+## download data as ZIP file and extract to two files with custom filename
+
+#%%
+# -----------------
+# IMPORT DATASETS
+# -----------------
+
+data_wind_msl = 'C:/Users/ikeva/DM_ERA5_project3_uvmsl.nc'
+data_prec = 'C:/Users/ikeva/DM_ERA5_project3_prec.nc'
+ds_wp = xr.open_dataset(data_wind_msl)
+ds_pr = xr.open_dataset(data_prec)
+
+ds_wp = ds_wp.rename({'valid_time': 'time'})
+ds_pr = ds_pr.rename({'valid_time': 'time'})
+ds_wp = ds_wp.drop_isel(time=[0,1,-1])
+
+
+
+#%%
+# --------------
+# NAO FUNCTION
+# --------------
+
+def Calculate_NAO_index(slp, lats=[35,65], lons=[290,30], norm=False):
+    slp_rolled = slp.roll(longitude=360, roll_coords=True)
+    
+    dl = 2
+    p35 = slp_rolled.sel(longitude=slice(lons[0], lons[1])).mean(dim='longitude').sel(latitude = slice(lats[0]+dl, lats[0]-dl)).mean(dim='latitude')
+    p65 = slp_rolled.sel(longitude=slice(lons[0], lons[1])).mean(dim='longitude').sel(latitude = slice(lats[1]+dl, lats[1]-dl)).mean(dim='latitude')
+
+    pdiff = p35 - p65
+    NAO_idx = pdiff - pdiff.mean(dim="time")
+    
+    if norm == True:
+        NAO_idx = NAO_idx/NAO_idx.std();        
+    return NAO_idx
+
+#%%
+# -------------------
+# CALCULATE NAO IDX
+# -------------------
+
+NAO = Calculate_NAO_index(ds_wp['msl'], norm=True)
+NAOw, NAOw_av = [], []
+
+for i in range(0,len(NAO.time),3):
+    NAOi = NAO.isel(time=slice(i,i+3))
+    NAOw.append(list(NAOi.values))
+    NAOw_av.append(np.mean(NAOw))
+
+NAO_dict = {'NAO_ALL': NAO.values, 'NAO_DJF': NAOw, 'NAO_DJF_AV': NAOw_av}
+    
+
+#%%
+# -------------
+# PLOT NAO IDX
+# -------------
+
+yrs = NAO.time[1::3].values
+plt.plot(yrs, NAO_dict['NAO_DJF_AV'], color='black', linewidth=0.75)
+
+plt.fill_between(yrs, NAO_dict['NAO_DJF_AV'], 0, where=NAO_dict['NAO_DJF_AV'] > 0, color='#ecb474', interpolate=True)
+plt.fill_between(yrs, NAO_dict['NAO_DJF_AV'], 0, where=NAO_dict['NAO_DJF_AV'] < 0, color='#95B3D7', interpolate=True)
+plt.show()
+
+
+#%%
+# -------------
+# CORRELATION
+# -------------
+
+
+NL = {'lons':[3.5, 7.1], 'lats':[50.5, 53.5]}
