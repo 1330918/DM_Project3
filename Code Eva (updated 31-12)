@@ -20,7 +20,6 @@ ds_pr = ds_pr.rename({'valid_time': 'time'})
 ds_wp = ds_wp.drop_isel(time=[0,1,-1])
 
 
-
 #%%
 # --------------
 # NAO FUNCTION
