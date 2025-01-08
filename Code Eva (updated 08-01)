@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 # IMPORT DATASETS
 # -----------------
 
-data_wind_msl = 'C:/Users/ikeva/DM_ERA5_project3_uvmsl.nc'
-data_prec = 'C:/Users/ikeva/DM_ERA5_project3_prec.nc'
+data_wind_msl = 'C:/Users/ikeva/DM_ERA5_project3_uvmsl_70.nc'
+data_prec = 'C:/Users/ikeva/DM_ERA5_project3_prec_70.nc'
 ds_wp = xr.open_dataset(data_wind_msl)
 ds_pr = xr.open_dataset(data_prec)
 
@@ -47,12 +47,13 @@ def Calculate_NAO_index(slp, lats=[35,65], lons=[290,30], norm=False):
 NAO = Calculate_NAO_index(ds_wp['msl'], norm=True)
 NAOw, NAOw_av = [], []
 
-for i in range(0,len(NAO.time),3):
+for i in range(0, len(NAO.time), 3):
     NAOi = NAO.isel(time=slice(i,i+3))
-    NAOw.append(list(NAOi.values))
-    NAOw_av.append(np.mean(NAOw))
+    NAO_djf = list(NAOi.values)
+    NAO_djf_all.append(list(NAOi.values))
+    NAO_djf_av.append(np.mean(NAO_djf))
 
-NAO_dict = {'NAO_ALL': NAO.values, 'NAO_DJF': NAOw, 'NAO_DJF_AV': NAOw_av}
+NAO_dict = {'NAO_ALL': NAO.values, 'NAO_DJF': NAO_djf_all, 'NAO_DJF_AV': NAO_djf_av}
     
 
 #%%
@@ -63,8 +64,8 @@ NAO_dict = {'NAO_ALL': NAO.values, 'NAO_DJF': NAOw, 'NAO_DJF_AV': NAOw_av}
 yrs = NAO.time[1::3].values
 plt.plot(yrs, NAO_dict['NAO_DJF_AV'], color='black', linewidth=0.75)
 
-plt.fill_between(yrs, NAO_dict['NAO_DJF_AV'], 0, where=NAO_dict['NAO_DJF_AV'] > 0, color='#ecb474', interpolate=True)
-plt.fill_between(yrs, NAO_dict['NAO_DJF_AV'], 0, where=NAO_dict['NAO_DJF_AV'] < 0, color='#95B3D7', interpolate=True)
+plt.fill_between(yrs, NAO_dict['NAO_DJF_AV'], 0, where=NAO_dict['NAO_DJF_AV'] > np.zeros(len(yrs)), color='#ecb474', interpolate=True)
+plt.fill_between(yrs, NAO_dict['NAO_DJF_AV'], 0, where=NAO_dict['NAO_DJF_AV'] < np.zeros(len(yrs)), color='#95B3D7', interpolate=True)
 plt.show()
 
 
