@@ -1,0 +1,102 @@
+import cdsapi
+import xarray as xr
+import numpy as np
+import matplotlib.pyplot as plt
+
+## download data as ZIP file and extract to two files with custom filename
+
+#%%
+# -----------------
+# IMPORT DATASETS
+# -----------------
+
+data_wind_msl = 'C:/Users/ikeva/DM_ERA5_project3_uvmsl_70.nc'
+data_prec = 'C:/Users/ikeva/DM_ERA5_project3_prec_70.nc'
+ds_wp = xr.open_dataset(data_wind_msl)
+ds_pr = xr.open_dataset(data_prec)
+
+ds_wp = ds_wp.rename({'valid_time': 'time'})
+ds_pr = ds_pr.rename({'valid_time': 'time'})
+ds_wp = ds_wp.drop_isel(time=[0,1,-1])
+ds_pr = ds_pr.drop_isel(time=[0,1,-1])
+
+
+#%%
+# --------------
+# NAO FUNCTION
+# --------------
+
+def Calculate_NAO_index(slp, lats=[35,65], lons=[290,30], norm=False):
+    slp_rolled = slp.roll(longitude=360, roll_coords=True)
+    
+    dl = 2
+    p35 = slp_rolled.sel(longitude=slice(lons[0], lons[1])).mean(dim='longitude').sel(latitude = slice(lats[0]+dl, lats[0]-dl)).mean(dim='latitude')
+    p65 = slp_rolled.sel(longitude=slice(lons[0], lons[1])).mean(dim='longitude').sel(latitude = slice(lats[1]+dl, lats[1]-dl)).mean(dim='latitude')
+
+    pdiff = p35 - p65
+    NAO_idx = pdiff - pdiff.mean(dim="time")
+    
+    if norm == True:
+        NAO_idx = NAO_idx/NAO_idx.std();        
+    return NAO_idx
+
+#%%
+# -------------------
+# CALCULATE NAO IDX
+# -------------------
+
+NAO = Calculate_NAO_index(ds_wp['msl'], norm=True)
+NAO_djf_all, NAO_djf_av = [], []
+
+for i in range(0, len(NAO.time), 3):
+    NAOi = NAO.isel(time=slice(i,i+3))          # NAO in xarray dataset format for DJF every year
+    NAO_djf = list(NAOi.values)                 # values of DJF NAO dataset in list
+    NAO_djf_all.append(list(NAOi.values))       # store DJF NAO index in list of lists
+    NAO_djf_av.append(np.mean(NAO_djf))         # store mean winter NAO index in new list
+
+
+## store all indexes in a dictionary; optional
+# NAO_dict = {'NAO_ALL': NAO.values, 'NAO_DJF': NAO_djf_all, 'NAO_DJF_AV': NAO_djf_av}
+    
+
+#%%
+# -------------
+# PLOT NAO IDX
+# -------------
+
+yrs = NAO.time[1::3].values
+plt.plot(yrs, NAO_djf_av, color='black', linewidth=0.75)
+plt.ylim(-1.5, 1.5)
+
+plt.fill_between(yrs, NAO_djf_av, 0, where=NAO_djf_av > np.zeros(len(yrs)), color='#ecb474', interpolate=True)
+plt.fill_between(yrs, NAO_djf_av, 0, where=NAO_djf_av < np.zeros(len(yrs)), color='#95B3D7', interpolate=True)
+plt.title("NAO index in DJF (mean) for a 70-year period")
+plt.ylabel("SLP difference (normalized)")
+plt.show()
+
+
+#%%
+# -------------
+# CORRELATION
+# -------------
+
+NL = {'lons':[3.5, 7.1], 'lats':[50.5, 53.5]}   # domain longitude/latitude of the Netherlands
+
+prec_NL = ds_pr.tp.sel(latitude=slice(NL['lats'][1], NL['lats'][0]), longitude=slice(NL['lons'][0], NL['lons'][1]))
+wind_u_NL = ds_wp.u10.sel(latitude=slice(NL['lats'][1], NL['lats'][0]), longitude=slice(NL['lons'][0], NL['lons'][1]))
+wind_v_NL = ds_wp.v10.sel(latitude=slice(NL['lats'][1], NL['lats'][0]), longitude=slice(NL['lons'][0], NL['lons'][1]))
+
+wind_directions_NL = np.arctan2(-wind_u_NL, -wind_v_NL) * (180 / np.pi)
+wind_directions_NL = (wind_directions_NL + 360) % 360
+
+#  calcule the average, the variance and the standard deviation of each of the time series
+def stat_func(time_series):
+    mean = np.mean(time_series)
+    variance = np.var(time_series)
+    standard_dev = np.std(time_series)
+    
+    return [mean, variance, standard_dev]
+
+# store the statistical calculations in a dictionary
+stats = {'NAO': stat_func(NAO_djf_av), 'PREC': stat_func(prec_NL.values), 'WIND': stat_func(wind_directions_NL.values)}
+
