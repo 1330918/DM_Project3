@@ -89,14 +89,22 @@ wind_v_NL = ds_wp.v10.sel(latitude=slice(NL['lats'][1], NL['lats'][0]), longitud
 wind_directions_NL = np.arctan2(-wind_u_NL, -wind_v_NL) * (180 / np.pi)
 wind_directions_NL = (wind_directions_NL + 360) % 360
 
-#  calcule the average, the variance and the standard deviation of each of the time series
+mean_prec_NL = prec_NL.mean(dim=['latitude', 'longitude']).values
+mean_wind_directions_NL = wind_directions_NL.mean(dim=['latitude', 'longitude']).values
+
+#  calcule the average, variance and standard deviation of each of the time series
 def stat_func(time_series):
     mean = np.mean(time_series)
     variance = np.var(time_series)
     standard_dev = np.std(time_series)
+    norm = (time_series - mean) / standard_dev
+    # v = np.var(norm)
     
-    return [mean, variance, standard_dev]
+    return [mean, variance, standard_dev, norm]
 
 # store the statistical calculations in a dictionary
-stats = {'NAO': stat_func(NAO_djf_av), 'PREC': stat_func(prec_NL.values), 'WIND': stat_func(wind_directions_NL.values)}
+stats = {'NAO': stat_func(NAO.values), 'PREC': stat_func(mean_prec_NL), 'WIND': stat_func(mean_wind_directions_NL)}
+
+x = np.vstack([stats['NAO'][-1], stats['PREC'][-1], stats['WIND'][-1]])
+cov = np.cov(x)
 
