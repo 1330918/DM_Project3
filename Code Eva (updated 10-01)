@@ -92,7 +92,7 @@ wind_directions_NL = (wind_directions_NL + 360) % 360
 mean_prec_NL = prec_NL.mean(dim=['latitude', 'longitude']).values
 mean_wind_directions_NL = wind_directions_NL.mean(dim=['latitude', 'longitude']).values
 
-#  calcule the average, variance and standard deviation of each of the time series
+##  calculate the average, variance and standard deviation of each of the time series
 def stat_func(time_series):
     mean = np.mean(time_series)
     variance = np.var(time_series)
@@ -103,8 +103,29 @@ def stat_func(time_series):
     return [mean, variance, standard_dev, norm]
 
 # store the statistical calculations in a dictionary
+# stats = {'NAO': stat_func(NAO_djf_av), 'PREC': stat_func(mean_prec_NL), 'WIND': stat_func(mean_wind_directions_NL)}
 stats = {'NAO': stat_func(NAO.values), 'PREC': stat_func(mean_prec_NL), 'WIND': stat_func(mean_wind_directions_NL)}
 
+
+## covariance matrix
 x = np.vstack([stats['NAO'][-1], stats['PREC'][-1], stats['WIND'][-1]])
 cov = np.cov(x)
+rounded_cov = cov.round(2)
+print(rounded_cov)
+print("")
+
+
+## eigenvalues and eigenvectors
+# The first component of the eigenvector represents the NAO-index,
+# the second component of the eigenvector represents the total precipitation in the NL,
+# and the third component of the eigenvector represents the wind direction in the NL
+
+eigvalues, eigvectors = np.linalg.eig(cov)
+
+print(f"labda1 = {eigvalues[0]:.3f}; labda2 = {eigvalues[1]:.3f}; labda3 = {eigvalues[2]:.3f}")
+print(f"PC1 = {round(eigvalues[0] / sum(eigvalues) * 100, 1)}%; PC2 = {round(eigvalues[1] / sum(eigvalues) * 100, 1)}%; PC3 = {round(eigvalues[2] / sum(eigvalues) * 100, 1)}%")
+print("")
+print("x1 =", tuple(np.round(eigvectors[0], 4)))
+print("x2 =", tuple(np.round(eigvectors[1], 4)))
+print("x3 =", tuple(np.round(eigvectors[2], 4)))
 
