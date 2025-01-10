@@ -129,3 +129,21 @@ print("x1 =", tuple(np.round(eigvectors[0], 4)))
 print("x2 =", tuple(np.round(eigvectors[1], 4)))
 print("x3 =", tuple(np.round(eigvectors[2], 4)))
 
+## plotting the precipitation
+plt.scatter(YRS, anomprecipw_av, label="Winter Mean Precipitation")
+
+# Fit the trend line
+z = np.polyfit(YRS, anomprecipw_av, 1)  # Fit a linear trend
+p = np.poly1d(z)
+
+# Plot the trendline
+plt.plot(YRS, p(YRS), "r--", label=f"Trendline: y = {z[0]:.2f}x + {z[1]:.2f}")
+
+# Add labels and legend
+plt.xlabel("Year")
+plt.ylabel("Precipitation Anomaly in m ")
+plt.legend()
+plt.title("Precipitation Anomaly with Trendline")
+
+# Show the plot
+plt.show()
