@@ -1,0 +1,227 @@
+### plotting the data
+
+
+## scatter plot of NAO-index
+
+from scipy.stats import linregress
+
+# extracting times and converting it into usable numerical times
+times = NAO.time.values  # datetime64[ns]
+times_days = times.astype('datetime64[D]')
+times_numeric = (times_days - np.datetime64('1970-01-01')) / np.timedelta64(1, 'D')  # Days since epoch
+times_numeric = times_numeric / 365.25 + 1970  # Convert days to fractional years
+
+# Perform linear regression
+slope, intercept, r_value, p_value, std_err = linregress(times_numeric, NAO)
+
+# Generate regression line for plotting
+x_fit = np.linspace(min(times_numeric), max(times_numeric), 100)
+y_fit = slope * x_fit + intercept
+
+# Plot data and regression line
+plt.figure(figsize=(10, 6))  # size in inches
+plt.plot(x_fit, y_fit, color='red',)
+
+# Add slope and correlation coefficient as text
+text = f"Slope = {slope:.2f}\nCorrelation = {r_value:.2f}"
+plt.text(0.05, 0.85, text, transform=plt.gca().transAxes, fontsize=10, horizontalalignment='left' , verticalalignment='center', bbox=dict(facecolor='white', alpha=0.5)) # if you want the slope to show, add: label=f'Fit: y={slope:.2f}x+{intercept:.2f}'
+
+# Identify positive and negative NAO values
+pos_NAO = NAO > 0  # Boolean mask for positive NAO
+neg_NAO = NAO < 0  # Boolean mask for negative NAO
+
+# Use the boolean masks to extract corresponding times and NAO values
+times_pos = times_numeric[pos_NAO]
+NAO_pos = NAO[pos_NAO]
+
+times_neg = times_numeric[neg_NAO]
+NAO_neg = NAO[neg_NAO]
+
+# Plot the positive and negative NAO indices
+plt.scatter(times_pos, NAO_pos, color="red", label="Positive NAO")
+plt.scatter(times_neg, NAO_neg, color="blue", label="Negative NAO")
+
+# Add labels, title, and legend
+plt.legend(loc="lower right")
+plt.xlabel("Years")
+plt.ylabel("NAO Index")
+plt.title("Scatter Plot of NAO Index")
+plt.grid()
+plt.show()
+
+
+## plotting precipitation over time
+
+precNL = mean_prec_NL*1000 # converting to mm
+
+# Perform linear regression
+slope, intercept, r_value, p_value, std_err = linregress(times_numeric, precNL)
+
+# Generate regression line for plotting
+x_fit = np.linspace(min(times_numeric), max(times_numeric), 100)
+y_fit = slope * x_fit + intercept
+
+# Plot data and regression line
+plt.figure(figsize=(10, 6))  
+plt.plot(x_fit, y_fit, color='red')
+
+# Add slope and correlation coefficient as text
+text = f"Slope = {slope:.2f}\nCorrelation = {r_value:.2f}"
+plt.text(0.05, 0.85, text, transform=plt.gca().transAxes, fontsize=10, horizontalalignment='left' , verticalalignment='center', bbox=dict(facecolor='white', alpha=0.5)) # if you want the slope to show, add: label=f'Fit: y={slope:.2f}x+{intercept:.2f}'
+
+plt.scatter(times_numeric, precNL, color="blue")
+plt.xlabel("Year")
+plt.ylabel("mean precipitation in mm")
+plt.title("Mean precipitation per day in the Netherlands")
+plt.grid()
+plt.show()
+
+
+## plotting wind directions by quadrants 
+
+# Define wind direction quadrants
+NW_mask = (mean_wind_directions_NL >= 270) & (mean_wind_directions_NL < 360)
+SW_mask = (mean_wind_directions_NL >= 180) & (mean_wind_directions_NL < 270)
+NE_mask = (mean_wind_directions_NL >= 0) & (mean_wind_directions_NL < 90)
+SE_mask = (mean_wind_directions_NL >= 90) & (mean_wind_directions_NL < 180)
+
+# Apply masks to filter data
+times_NW = times_numeric[NW_mask]
+wind_NW = mean_wind_directions_NL[NW_mask]
+
+times_SW = times_numeric[SW_mask]
+wind_SW = mean_wind_directions_NL[SW_mask]
+
+times_NE = times_numeric[NE_mask]
+wind_NE = mean_wind_directions_NL[NE_mask]
+
+times_SE = times_numeric[SE_mask]
+wind_SE = mean_wind_directions_NL[SE_mask]
+
+# Perform linear regression
+slope, intercept, r_value, p_value, std_err = linregress(times_numeric, mean_wind_directions_NL)
+x_fit = np.linspace(min(times_numeric), max(times_numeric), 100)
+y_fit = slope * x_fit + intercept
+
+# Plot data
+plt.figure(figsize=(10, 6))  # size in inches
+plt.scatter(times_NW, wind_NW, color='turquoise', label='Northwest (270°-360°)')
+plt.scatter(times_SW, wind_SW, color='blue', label='Southwest (180°-270°)')
+plt.scatter(times_NE, wind_NE, color='orange', label='Northeast (0°-90°)')
+plt.scatter(times_SE, wind_SE, color='purple', label='Southeast (90°-180°)')
+plt.plot(x_fit, y_fit, color='red')
+
+# Add slope and correlation coefficient as text
+text = f"Slope = {slope:.2f}\nCorrelation = {r_value:.2f}"
+plt.text(0.05, 0.85, text, transform=plt.gca().transAxes, fontsize=10, 
+         horizontalalignment='left', verticalalignment='bottom', 
+         bbox=dict(facecolor='white', alpha=0.5))
+
+# Labels, legend, and grid
+plt.xlabel("Year")
+plt.ylabel("Wind Direction (in degrees)")
+plt.title("Mean Winter Wind Directions in the Netherlands by Quadrant")
+plt.legend(loc="upper right")  
+plt.grid()
+plt.show()
+
+
+
+## Plotting the precipitation and NAO
+
+from scipy.stats import linregress
+
+precip = mean_prec_NL*1000 # converting into mm
+
+# Compute linear regression
+slope, intercept, r_value, p_value, std_err = linregress(NAO, precip )
+
+# Generate regression line
+x_fit = np.linspace(min(NAO), max(NAO), 100)
+y_fit = slope * x_fit + intercept
+
+# Create the plot
+plt.figure(figsize=(10, 6))  
+plt.scatter(NAO, precip, color='blue')
+plt.plot(x_fit, y_fit, color='red')
+
+# Add slope and correlation coefficient as text
+text = f"Slope = {slope:.2f}\nCorrelation = {r_value:.2f}"
+plt.text(0.05, 0.85, text, transform=plt.gca().transAxes, fontsize=10, horizontalalignment='left' , verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5)) # if you want the slope to show, add: label=f'Fit: y={slope:.2f}x+{intercept:.2f}'
+
+# Add labels, legend, and show the plot
+plt.xlabel("NAO-index")
+plt.ylabel("Precipitation in mm")
+plt.title("Precipitation vs NAO")
+plt.grid()
+
+
+
+## Plotting the wind direction and NAO index
+
+from scipy.stats import linregress
+
+# Apply masks to filter data
+NAO_NW = NAO[NW_mask]
+NAO_SW = NAO[SW_mask]
+NAO_NE = NAO[NE_mask]
+NAO_SE = NAO[SE_mask]
+
+# Compute linear regression
+slope, intercept, r_value, p_value, std_err = linregress(NAO, mean_wind_directions_NL)
+
+# Generate regression line
+x_fit = np.linspace(min(NAO), max(NAO), 100)
+y_fit = slope * x_fit + intercept
+
+# Create the plot
+plt.figure(figsize=(10, 6))  
+
+# Plot data
+plt.figure(figsize=(10, 6))  # size in inches
+plt.scatter(NAO_NW, wind_NW, color='turquoise', label='Northwest (270°-360°)')
+plt.scatter(NAO_SW, wind_SW, color='blue', label='Southwest (180°-270°)')
+plt.scatter(NAO_NE, wind_NE, color='orange', label='Northeast (0°-90°)')
+plt.scatter(NAO_SE, wind_SE, color='purple', label='Southeast (90°-180°)')
+plt.plot(x_fit, y_fit, color='red')
+
+# Add slope and correlation coefficient as text
+text = f"Slope = {slope:.2f}\nCorrelation = {r_value:.2f}"
+plt.text(0.05, 0.85, text, transform=plt.gca().transAxes, fontsize=10, horizontalalignment='left' , verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5)) # if you want the slope to show, add: label=f'Fit: y={slope:.2f}x+{intercept:.2f}'
+
+# Add labels, legend, and show the plot
+plt.xlabel("NAO-index")
+plt.ylabel("Wind direction")
+plt.title("Wind direction vs NAO-index")
+plt.legend()
+plt.grid()
+
+
+
+## Plotting the wind direction and precipitation 
+
+from scipy.stats import linregress
+
+precip = mean_prec_NL*1000
+
+# Compute linear regression
+slope, intercept, r_value, p_value, std_err = linregress(precip, mean_wind_directions_NL)
+
+# Generate regression line
+x_fit = np.linspace(min(precip), max(precip), 100)
+y_fit = slope * x_fit + intercept
+
+# Create the plot
+plt.figure(figsize=(10, 6))  
+plt.scatter(precip, mean_wind_directions_NL, color='blue')
+plt.plot(x_fit, y_fit, color='red')
+
+# Add slope and correlation coefficient as text
+text = f"Slope = {slope:.2f}\nCorrelation = {r_value:.2f}"
+plt.text(0.05, 0.85, text, transform=plt.gca().transAxes, fontsize=10, horizontalalignment='left' , verticalalignment='center', bbox=dict(facecolor='white', alpha=0.5)) # if you want the slope to show, add: label=f'Fit: y={slope:.2f}x+{intercept:.2f}'
+
+# Add labels, legend, and show the plot
+plt.xlabel("Precipiation in mm")
+plt.ylabel("Wind direction in degrees")
+plt.title("Wind direction vs precipitation")
+plt.grid()
